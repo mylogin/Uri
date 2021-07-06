@@ -16,7 +16,6 @@
 #include <memory>
 #include <sstream>
 #include <string>
-#include <StringExtensions/StringExtensions.hpp>
 #include <Uri/Uri.hpp>
 #include <vector>
 
@@ -839,19 +838,16 @@ namespace Uri {
                 return false;
             }
             if (hostIsRegName) {
-                host = StringExtensions::ToLower(host);
+                std::transform(host.begin(), host.end(), host.begin(), [](unsigned char c){ return std::tolower(c); });
             }
             if (portString.empty()) {
                 hasPort = false;
             } else {
                 intmax_t portAsInt;
-                if (
-                    StringExtensions::ToInteger(
-                        portString,
-                        portAsInt
-                    ) != StringExtensions::ToIntegerResult::Success
-                ) {
-                    return false;
+                try {
+                    portAsInt = std::stoi(portString);
+                } catch(...) {
+                   return false; 
                 }
                 if (
                     (portAsInt < 0)
@@ -908,7 +904,7 @@ namespace Uri {
                 ) {
                     return false;
                 }
-                scheme = StringExtensions::ToLower(scheme);
+                std::transform(scheme.begin(), scheme.end(), scheme.begin(), [](unsigned char c){ return std::tolower(c); });
                 rest = uriString.substr(schemeEnd + 1);
             }
             return true;
@@ -1435,7 +1431,9 @@ namespace Uri {
             }
             if (!impl_->host.empty()) {
                 if (ValidateIpv6Address(impl_->host)) {
-                    buffer << '[' << StringExtensions::ToLower(impl_->host) << ']';
+                    std::string host(impl_->host);
+                    std::transform(host.begin(), host.end(), host.begin(), [](unsigned char c){ return std::tolower(c); });
+                    buffer << '[' << host << ']';
                 } else {
                     buffer << EncodeElement(impl_->host, REG_NAME_NOT_PCT_ENCODED);
                 }
